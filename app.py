@@ -38,10 +38,8 @@ def search():
     except Exception as e:
         return jsonify({"answer": f"GPT 오류: {str(e)}"}), 500
 
-# ✅ Gunicorn용 app 노출
-if __name__ != "__main__":
-    app = app
-
-# 🔥 로컬에서 실행할 때만 app.run
+# 🔥 직접 실행할 때만 서버 시작
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
+else:
+    application = app
