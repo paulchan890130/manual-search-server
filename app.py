@@ -23,7 +23,7 @@ def index():
 def search():
     question = request.json.get("question", "")
     messages = [
-        {"role": "system", "content": "당신은 체료/사증 전문 GPT 비서입니다. 메뉴얼을 기반으로 간격하게 답변하세요."},
+        {"role": "system", "content": "당신은 체류/사증 전문 GPT 비서입니다. 메뉴얼을 기반으로 간결하게 답변하세요."},
         {"role": "user", "content": question}
     ]
 
@@ -38,6 +38,10 @@ def search():
     except Exception as e:
         return jsonify({"answer": f"GPT 오류: {str(e)}"}), 500
 
-# 🔥 직접 실행할 때만 서버 시작
+# ✅ Gunicorn용 app 노출
+if __name__ != "__main__":
+    app = app
+
+# 🔥 로컬에서 실행할 때만 app.run
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
