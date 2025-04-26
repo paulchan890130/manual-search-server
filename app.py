@@ -37,8 +37,5 @@ def search():
         return jsonify({"answer": f"오류 발생: {str(e)}"}), 500
 
 # 🔥 gunicorn 실행을 위한 app 노출
-if __name__ != "__main__":
-    app = app
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
