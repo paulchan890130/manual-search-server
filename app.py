@@ -6,7 +6,6 @@ import os
 import openai
 from flask_cors import CORS
 from pathlib import Path
-from PyPDF2 import PdfReader
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
@@ -18,11 +17,14 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 app = Flask(__name__)
 CORS(app)
 
-# 📚 벡터 DB 구축 함수
-def build_vector_store(pdf_path, collection_name, vector_store_path):
-    print(f"[벡터 생성] PDF: {pdf_path} → {vector_store_path}/{collection_name}")
-    reader = PdfReader(pdf_path)
-    text = "\n".join(page.extract_text() or "" for page in reader.pages)
+# 📚 텍스트 파일로 벡터 DB 구축 함수 (접근성 텍스트 처리 포함)
+def build_vector_store(txt_path, collection_name, vector_store_path):
+    print(f"[벡터 생성] TXT: {txt_path} → {vector_store_path}/{collection_name}")
+    with open(txt_path, "r", encoding="utf-8") as f:
+        text = f.read()
+
+    # 접근성 텍스트 처리 (줄바꿈, 불필요한 공백 제거)
+    text = text.replace("\r", "").replace("\n", " ").strip()
     chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
 
     embedding_function = OpenAIEmbeddingFunction(api_key=openai.api_key)
@@ -30,7 +32,7 @@ def build_vector_store(pdf_path, collection_name, vector_store_path):
     collection = client.get_or_create_collection(name=collection_name, embedding_function=embedding_function)
 
     ids = [f"chunk_{i}" for i in range(len(chunks))]
-    metadatas = [{"source": str(pdf_path)}] * len(chunks)
+    metadatas = [{"source": str(txt_path)}] * len(chunks)
     collection.add(documents=chunks, metadatas=metadatas, ids=ids)
     print("✅ 벡터 저장 완료")
 
@@ -40,8 +42,8 @@ def init_vector_db():
     vector_db_path = "vector_db"
     os.makedirs(vector_db_path, exist_ok=True)
 
-    stay_files = list(base_dir.glob("*체류*.pdf"))
-    visa_files = list(base_dir.glob("*사증*.pdf"))
+    stay_files = list(base_dir.glob("*체류*.txt"))
+    visa_files = list(base_dir.glob("*사증*.txt"))
 
     if stay_files:
         build_vector_store(stay_files[0], "stay_manual", vector_db_path)
@@ -57,11 +59,9 @@ def search():
     embedding_function = OpenAIEmbeddingFunction(api_key=openai.api_key)
     client = chromadb.PersistentClient(path="vector_db")
 
-    # 체류민원 manual 검색
     stay_collection = client.get_collection("stay_manual", embedding_function=embedding_function)
     stay_result = stay_collection.query(query_texts=[question], n_results=3)
 
-    # 사증민원 manual 검색
     visa_collection = client.get_collection("visa_manual", embedding_function=embedding_function)
     visa_result = visa_collection.query(query_texts=[question], n_results=3)
 
