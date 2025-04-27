@@ -43,10 +43,10 @@ def init_vector_db():
     stay_files = list(base_dir.glob("*체류*.pdf"))
     visa_files = list(base_dir.glob("*사증*.pdf"))
 
-    if stay_files and not Path(vector_db_path, "stay_manual").exists():
+    if stay_files:
         build_vector_store(stay_files[0], "stay_manual", vector_db_path)
 
-    if visa_files and not Path(vector_db_path, "visa_manual").exists():
+    if visa_files:
         build_vector_store(visa_files[0], "visa_manual", vector_db_path)
 
 # 🔍 POST 요청 처리
