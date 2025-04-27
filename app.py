@@ -34,9 +34,9 @@ def build_vector_store(pdf_path, collection_name, vector_store_path):
     collection.add(documents=chunks, metadatas=metadatas, ids=ids)
     print("✅ 벡터 저장 완료")
 
-# 📂 서버 시작시 manuals 폴더에서 벡터DB 구축
+# 🧠 서버 시작시 벡터DB 구축 함수
 def init_vector_db():
-    base_dir = Path("manuals")  # 서버에서는 manuals/ 폴더로
+    base_dir = Path("manuals")
     vector_db_path = "vector_db"
     os.makedirs(vector_db_path, exist_ok=True)
 
@@ -49,12 +49,7 @@ def init_vector_db():
     if visa_files and not Path(vector_db_path, "visa_manual").exists():
         build_vector_store(visa_files[0], "visa_manual", vector_db_path)
 
-# ✅ 첫 요청 전에 벡터 DB 초기화
-@app.before_first_request
-def before_first_request_func():
-    init_vector_db()
-
-# 🔍 검색 API
+# 🔍 POST 요청 처리
 @app.route("/search", methods=["POST"])
 def search():
     question = request.json.get("question", "")
@@ -62,10 +57,12 @@ def search():
     embedding_function = OpenAIEmbeddingFunction(api_key=openai.api_key)
     client = chromadb.PersistentClient(path="vector_db")
 
+    # 체류민원 manual 검색
     stay_collection = client.get_collection("stay_manual", embedding_function=embedding_function)
-    visa_collection = client.get_collection("visa_manual", embedding_function=embedding_function)
-
     stay_result = stay_collection.query(query_texts=[question], n_results=3)
+
+    # 사증민원 manual 검색
+    visa_collection = client.get_collection("visa_manual", embedding_function=embedding_function)
     visa_result = visa_collection.query(query_texts=[question], n_results=3)
 
     context_texts = []
@@ -98,14 +95,15 @@ def search():
     except Exception as e:
         return jsonify({"answer": f"GPT 오류: {str(e)}"}), 500
 
-# ✅ 서버 상태 확인
+# ✅ 상태 확인용
 @app.route("/", methods=["GET"])
 def index():
     return "✅ 서버 정상 실행 중입니다.", 200
 
-# 🔥 직접 실행 or gunicorn 대응
+# 🔥 직접 실행하거나 서버 import 시 처리
 if __name__ == "__main__":
     init_vector_db()
     app.run(host="0.0.0.0", port=10000, debug=True)
 else:
+    init_vector_db()
     application = app
