@@ -34,9 +34,9 @@ def build_vector_store(pdf_path, collection_name, vector_store_path):
     collection.add(documents=chunks, metadatas=metadatas, ids=ids)
     print("✅ 벡터 저장 완료")
 
-# 📂 벡터 DB 초기화 함수
+# 📂 서버 시작시 manuals 폴더에서 벡터DB 구축
 def init_vector_db():
-    base_dir = Path("manuals")
+    base_dir = Path("manuals")  # 서버에서는 manuals/ 폴더로
     vector_db_path = "vector_db"
     os.makedirs(vector_db_path, exist_ok=True)
 
@@ -49,7 +49,7 @@ def init_vector_db():
     if visa_files and not Path(vector_db_path, "visa_manual").exists():
         build_vector_store(visa_files[0], "visa_manual", vector_db_path)
 
-# ✅ 첫 요청 전에 한번만 실행
+# ✅ 첫 요청 전에 벡터 DB 초기화
 @app.before_first_request
 def before_first_request_func():
     init_vector_db()
@@ -103,7 +103,7 @@ def search():
 def index():
     return "✅ 서버 정상 실행 중입니다.", 200
 
-# 🔥 직접 실행 또는 gunicorn 대응
+# 🔥 직접 실행 or gunicorn 대응
 if __name__ == "__main__":
     init_vector_db()
     app.run(host="0.0.0.0", port=10000, debug=True)
