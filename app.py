@@ -103,7 +103,9 @@ def index():
 # 🔥 직접 실행하거나 서버 import 시 처리
 if __name__ == "__main__":
     init_vector_db()
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # 🔥 Render가 요구하는 PORT로 맞춤
+    app.run(host="0.0.0.0", port=port, debug=True)
 else:
     init_vector_db()
     application = app
+
