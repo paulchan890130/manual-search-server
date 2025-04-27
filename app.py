@@ -34,8 +34,8 @@ def build_vector_store(pdf_path, collection_name, vector_store_path):
     collection.add(documents=chunks, metadatas=metadatas, ids=ids)
     print("✅ 벡터 저장 완료")
 
-# 🧠 서버 실행시 벡터DB 구축
-@app.before_first_request
+# 🧠 서버 시작시 벡터DB 구축
+@app.before_serving
 def init_vector_db():
     base_dir = Path("C:/Users/윤찬/내 드라이브/한우리 현행업무/프로그램/manual-search-server")
     vector_db_path = "vector_db"
